@@ -1,0 +1,54 @@
+#!/bin/sh
+
+echo Update system packages
+dnf update -y
+
+echo Install etcd
+dnf install -y etcd
+
+echo Stop previous daemon
+systemctl stop etcd
+
+echo Copy certificates
+mkdir -p /etc/pki/etcd
+mv -f ~vagrant/master.pem /etc/pki/etcd/master.pem
+mv -f ~vagrant/master-key.pem /etc/pki/etcd/master-key.pem
+mv -f ~vagrant/ca.pem /etc/pki/etcd/ca.pem
+chmod 700 /etc/pki/etcd
+chmod 600 /etc/pki/etcd/*
+chown -R etcd:etcd /etc/pki/etcd
+
+echo Copy etcd configuration
+mv -f ~vagrant/etcd.conf /etc/etcd/etcd.conf
+chmod 600 /etc/etcd/etcd.conf
+chown etcd:etcd /etc/etcd/etcd.conf
+
+echo Make etcd repository
+rm -fr /var/lib/etcd/master.etcd
+mkdir -p /var/lib/etcd/master.etcd
+chown -R etcd:etcd /var/lib/etcd/master.etcd
+
+echo add the hosts entry for master
+grep -q 192.168.50.2 /etc/hosts
+if [[ $? -ne 0 ]] ; then
+  echo "192.168.50.2 master" >> /etc/hosts
+fi
+
+echo add the hosts entry for node1
+grep -q 192.168.50.3 /etc/hosts
+if [[ $? -ne 0 ]] ; then
+  echo "192.168.50.3 node1" >> /etc/hosts
+fi
+
+echo add the hosts entry for node2
+grep -q 192.168.50.4 /etc/hosts
+if [[ $? -ne 0 ]] ; then
+  echo "192.168.50.4 node2" >> /etc/hosts
+fi
+
+echo start etcd
+systemctl start etcd
+
+#echo test etcd
+#etcdctl --cert-file /etc/pki/etcd/master.pem --key-file /etc/pki/etcd/master-key.pem --ca-file /etc/pki/etcd/ca.pem --endpoint https://master:2379 set /message "Hello world"
+
