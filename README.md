@@ -1,2 +1,2 @@
-# vagrant-ca
-Vagrant configuration for a CA using cfssl
+# vagrant-kubernetes
+Vagrant configuration for a secured kubernetes installation
